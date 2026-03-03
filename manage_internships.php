@@ -26,7 +26,7 @@ if(isset($_POST['add'])) {
 	$student_id = $_POST['student_id'];
 	$assessor_id = $_POST['assessor_id'];
 	$company_name = trim($_POST['company_name']);
-	$supervisor = trim($_POST['supervisor_name']);
+	$supervisor_name = trim($_POST['supervisor_name']);
 	$duration = trim($_POST['duration']);
 	$start_date = $_POST['start_date'];
 	$end_date = $_POST['end_date'];
@@ -46,13 +46,13 @@ if(isset($_POST['add'])) {
 if(isset($_POST['update'])) {
 	$internship_id = $_POST['internship_id'];
 	$company_name = trim($_POST['company_name']);
-	$supervisor = trim($_POST['supervisor_name']);
+	$supervisor_name = trim($_POST['supervisor_name']);
 	$duration = trim($_POST['duration']);
     	$start_date = $_POST['start_date'];
 	$end_date = $_POST['end_date'];
 
     	$stmt = $conn->prepare("UPDATE internships SET company_name=?, supervisor_name=?, duration=?, start_date=?, end_date=? WHERE internship_id=?");
-    	$stmt->bind_param("sssi", $company_name, $supervisor, $duration, $start_date, $end_date, $internship_id);
+    	$stmt->bind_param("sssi", $company_name, $supervisor_name, $duration, $start_date, $end_date, $internship_id);
 	
     	if($stmt->execute()) {
         	$message = "Internship updated successfully!";
@@ -151,10 +151,10 @@ $assessors = $conn->query("SELECT user_id, full_name FROM users WHERE role='asse
             		<td><?php echo htmlspecialchars($row['student_name'])." (".$row['matric_no'].")"; ?></td>
             		<td><?php echo htmlspecialchars($row['assessor_name']); ?></td>
             		<td><?php echo htmlspecialchars($row['company_name']); ?></td>
-            		<td><?php echo htmlspecialchars($row['supervisor_name']); ?></td>
-			<td><?php echo htmlspecialchars($row['duration']); ?></td>
-            		<td><?php echo htmlspecialchars($row['start_date']); ?></td>
-			<td><?php echo htmlspecialchars($row['end_date']); ?></td>
+            		<td><?php echo htmlspecialchars($row['supervisor_name'] ?? ""); ?></td>
+			<td><?php echo htmlspecialchars($row['duration'] ?? ""); ?></td>
+            		<td><?php echo htmlspecialchars($row['start_date'] ?? ""); ?></td>
+			<td><?php echo htmlspecialchars($row['end_date'] ?? ""); ?></td>
             		<td>
                 		<!-- Edit Form -->
                 		<form method="POST" style="display:inline;">
