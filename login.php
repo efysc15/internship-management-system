@@ -33,12 +33,19 @@ if (isset($_POST['login'])) {
 		$row = $result->fetch_assoc();
 
 		// Check password
-		if ($password == $row['password']) {
+		if (password_verify ($password, $row['password'])) {
+			
+			// Update last login time 
+			$update = $conn->prepare("UPDATE users SET last_login = NOW() WHERE user_id = ?");
+			$update->bind_param("I", $row['user_id']);
+			$update->execute();
+			$update->close();
 	
 			// Store user info in session variables
 			$_SESSION['user_id'] = $row['user_id'];
 			$_SESSION['role'] = $row['role'];
 			$_SESSION['full_name'] = $row['full_name'];
+			$_SESSION['last_activity'] = time();
 
 			// Redirect based on role
 			if ($row['role'] == 'admin') {
