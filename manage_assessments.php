@@ -4,8 +4,9 @@ MANAGE_ASSESSMENTS.php
 Purpose: Assessors record evaluations for students
 Features:
 - Session & role validation (assessor only)
-- Submit new assessment (score + comments)
-- Display submitted assessments
+- Submit new assessment (criteria + comments)
+- Total score = (sum of all criteria / 800) * 100
+- Display submitted assessments with breakdown
 */
 
 session_start();
@@ -22,35 +23,61 @@ $message = "";
 // Handle Assessment Submission
 if(isset($_POST['submit_assessment'])) {
 	$student_id   = $_POST['student_id'];
-	$assessor_id  = $_SESSION['user_id'];
-    	$score        = $_POST['score'];
-    	$comments     = trim($_POST['comments']);
+    	$assessor_id  = $_SESSION['user_id'];
 
-    	// Basic validation
-    	if(!is_numeric($score) || $score < 0 || $score > 100) {
-        	$message = "Error: Score must be between 0 and 100.";
+    	// Collect all criteria (raw scores 0–100)
+    	$task_project       = $_POST['task_project'];
+    	$health_safety      = $_POST['health_safety'];
+    	$theory_application = $_POST['theory_application'];
+    	$report_presentation= $_POST['report_presentation'];
+    	$language_clarity   = $_POST['language_clarity'];
+    	$lifelong_learning  = $_POST['lifelong_learning'];
+    	$project_management = $_POST['project_management'];
+    	$time_management    = $_POST['time_management'];
+    	$comments           = trim($_POST['comments']);
+
+    	// Validate scores
+    	$criteria = [$task_project,$health_safety,$theory_application,$report_presentation,
+                 	$language_clarity,$lifelong_learning,$project_management,$time_management];
+    	$valid = true;
+   	foreach($criteria as $c){
+        	if(!is_numeric($c) || $c < 0 || $c > 100){
+            		$valid = false;
+            		break;
+        	}
+    	}
+
+    	if(!$valid){
+        	$message = "Error: Each score must be between 0 and 100.";
     	} else {
+        	// Calculate total score as percentage
+        	$sum_scores = array_sum($criteria); // sum of all 8 criteria
+       		$total_score = ($sum_scores / 800) * 100; // normalized percentage
+
         	$stmt = $conn->prepare("SELECT internship_id FROM internships WHERE student_id = ? AND assessor_id = ? LIMIT 1");
-		$stmt->bind_param("ii", $student_id, $assessor_id);
-		$stmt->execute();
-		$result = $stmt->get_result();
-		$internship = $result->fetch_assoc();
-		$stmt->close();
+        	$stmt->bind_param("ii", $student_id, $assessor_id);
+        	$stmt->execute();
+        	$result = $stmt->get_result();
+        	$internship = $result->fetch_assoc();
+        	$stmt->close();
 
-		if($internship) {
-			$internship_id = $internship['internship_id'];
-			$stmt = $conn->prepare("INSERT INTO assessments (internship_id, assessor_id, total_score, comments, created_at) VALUES (?, ?, ?, ?, NOW())");
-			$stmt->bind_param("iiis", $internship_id, $assessor_id, $score, $comments);
+        	if($internship) {
+            		$internship_id = $internship['internship_id'];
+            		$stmt = $conn->prepare("INSERT INTO assessments 
+                		(internship_id, assessor_id, task_project, health_safety, theory_application, report_presentation, language_clarity, lifelong_learning, project_management, time_management, total_score, comments, created_at) 
+                		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+            		$stmt->bind_param("iiddddddddds", $internship_id, $assessor_id,
+                	$task_project, $health_safety, $theory_application, $report_presentation, $language_clarity, $lifelong_learning, $project_management, $time_management, $total_score, $comments);
 
-			if($stmt->execute()) {
-				$message = "Assessment submitted successfully!";
-			} else {
-				$message = "Error: Could not submit assessment.";
-			}
-			$stmt->close();
-		} else {
-			$message = "Error: Internship not found for this student.";
-		}
+            		if($stmt->execute()) {
+                		$message = "Assessment submitted successfully!";
+            		} else {
+                		$message = "Error: Could not submit assessment.";
+            		}
+            		$stmt->close();
+        	} else {
+            		$message = "Error: Internship not found for this student.";
+        	}
     	}
 }
 
@@ -67,9 +94,13 @@ $students = $stmt->get_result();
 $stmt->close();
 
 // Fetch submitted assessments
-$sql2 = "SELECT a.assessment_id, s.student_name, s.matric_no, a.total_score, a.comments, a.created_at
+$sql2 = "SELECT a.assessment_id, s.student_name, s.matric_no,
+                a.task_project, a.health_safety, a.theory_application,
+                a.report_presentation, a.language_clarity, a.lifelong_learning,
+                a.project_management, a.time_management,
+                a.total_score, a.comments, a.created_at
         FROM assessments a
-	JOIN internships i ON a.internship_id = i.internship_id
+        JOIN internships i ON a.internship_id = i.internship_id
         JOIN students s ON i.student_id = s.student_id
         WHERE a.assessor_id = ?
         ORDER BY a.created_at DESC";
@@ -83,7 +114,7 @@ $stmt2->close();
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Manage Assessments</title>
+    	<title>Manage Assessments</title>
 </head>
 <body>
     	<h1>Manage Assessments</h1>
@@ -106,31 +137,49 @@ $stmt2->close();
             		<?php } ?>
         	</select><br><br>
 
-        	Score (0–100): <input type="number" name="score" min="0" max="100" required><br><br>
+        	Task/Project: <input type="number" name="task_project" min="0" max="100" required> / 100<br><br>
+        	Health & Safety: <input type="number" name="health_safety" min="0" max="100" required> / 100<br><br>
+        	Theory Application: <input type="number" name="theory_application" min="0" max="100" required> / 100<br><br>
+        	Report Presentation: <input type="number" name="report_presentation" min="0" max="100" required> / 100<br><br>
+        	Language Clarity: <input type="number" name="language_clarity" min="0" max="100" required> / 100<br><br>
+        	Lifelong Learning: <input type="number" name="lifelong_learning" min="0" max="100" required> / 100<br><br>
+        	Project Management: <input type="number" name="project_management" min="0" max="100" required> / 100<br><br>
+        	Time Management: <input type="number" name="time_management" min="0" max="100" required> / 100<br><br>
+
         	Comments:<br>
         	<textarea name="comments" rows="4" cols="50"></textarea><br><br>
 
         	<button type="submit" name="submit_assessment">Submit Assessment</button>
     	</form>
-    	<hr>
+    <hr>
 
     	<!-- Assessment Records -->
     	<h3>Submitted Assessments</h3>
     	<table border="1" cellpadding="5">
         	<tr>
-            		<th>ID</th><th>Student</th><th>Matric No</th><th>Score</th><th>Comments</th><th>Date</th>
+            		<th>ID</th><th>Student</th><th>Matric No</th>
+            		<th>Task</th><th>Safety</th><th>Theory</th><th>Report</th>
+            		<th>Language</th><th>Lifelong</th><th>Project Mgmt</th><th>Time Mgmt</th>
+            		<th>Total (%)</th><th>Comments</th><th>Date</th>
         	</tr>
         	<?php while($row = $assessments->fetch_assoc()) { ?>
         	<tr>
             		<td><?php echo htmlspecialchars($row['assessment_id']); ?></td>
             		<td><?php echo htmlspecialchars($row['student_name']); ?></td>
             		<td><?php echo htmlspecialchars($row['matric_no']); ?></td>
-            		<td><?php echo htmlspecialchars($row['total_score']); ?></td>
+            		<td><?php echo htmlspecialchars($row['task_project']); ?></td>
+            		<td><?php echo htmlspecialchars($row['health_safety']); ?></td>
+            		<td><?php echo htmlspecialchars($row['theory_application']); ?></td>
+            		<td><?php echo htmlspecialchars($row['report_presentation']); ?></td>
+           		<td><?php echo htmlspecialchars($row['language_clarity']); ?></td>
+            		<td><?php echo htmlspecialchars($row['lifelong_learning']); ?></td>
+            		<td><?php echo htmlspecialchars($row['project_management']); ?></td>
+            		<td><?php echo htmlspecialchars($row['time_management']); ?></td>
+            		<td><?php echo number_format($row['total_score'], 2); ?>%</td>
             		<td><?php echo htmlspecialchars($row['comments']); ?></td>
             		<td><?php echo htmlspecialchars($row['created_at']); ?></td>
-        	</tr>
+       		</tr>
         	<?php } ?>
     	</table>
 </body>
 </html>
-
