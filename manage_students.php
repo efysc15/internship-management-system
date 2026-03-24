@@ -198,6 +198,23 @@ if(isset($_GET['delete'])) {
     	exit();
 }
 
+// -------------------- EXPORT STUDENTS TO CSV --------------------
+if(isset($_GET['export_csv'])) {
+    	header('Content-Type: text/csv; charset=utf-8');
+    	header('Content-Disposition: attachment; filename=students.csv');
+
+    	$output = fopen('php://output', 'w');
+    	// Write header row
+    	fputcsv($output, ['ID', 'Matric No', 'Name', 'Programme']);
+
+    	$result = $conn->query("SELECT * FROM students ORDER BY student_id ASC");
+    	while($row = $result->fetch_assoc()) {
+        	fputcsv($output, [$row['student_id'], $row['matric_no'], $row['student_name'], $row['programme']]);
+    	}
+    	fclose($output);
+    	exit();
+}
+
 // -------------------- FETCH STUDENTS --------------------
 $result = $conn->query("SELECT * FROM students ORDER BY student_id ASC");
 ?>
@@ -287,5 +304,8 @@ $result = $conn->query("SELECT * FROM students ORDER BY student_id ASC");
         	</tr>
         	<?php } ?>
     	</table>
+	<form method="GET" action="manage_students.php">
+    		<button type="submit" name="export_csv">Export Records to CSV</button>
+	</form>
 </body>
 </html>
