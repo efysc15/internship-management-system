@@ -11,6 +11,7 @@ Features:
 - Default view shows first 5 assigned students
 - Each student row includes "View Report Card" button
 - Link to view_assigned_students.php for full list
+- Notification polling for new assignments/updates
 */
 
 session_start();
@@ -18,7 +19,7 @@ include("includes/config.php");
 
 // Check login and role
 if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'assessor') {
-	header("Location: login.php");
+    	header("Location: login.php");
     	exit();
 }
 
@@ -26,7 +27,7 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'assessor') {
 if(isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 600)) {
     	session_unset();
     	session_destroy();
-    	header("Location: login.php");
+    	header("Location: login.php?expired=1");
     	exit();
 }
 $_SESSION['last_activity'] = time();
@@ -61,6 +62,7 @@ $stmt->close();
         	window.onload = function() {
             		updateTime();
             		loadStudents(""); // load default students
+            		checkNotifications(); // initial notification check
         	};
 
         	// Live search with AJAX
@@ -70,31 +72,45 @@ $stmt->close();
             		xhr.onload = function() {
                 		if (xhr.status === 200) {
                     			document.getElementById("results").innerHTML = xhr.responseText;
-                		}
+                		}	
             		};
             		xhr.send();
         	}
+
+        	// Poll for notifications
+        	function checkNotifications() {
+            		fetch("fetch_notifications.php")
+                		.then(response => response.json())
+                		.then(data => {
+                    			data.forEach(notification => {
+                        			// Simple alert (replace with toast for better UX)
+                        			alert(notification.message);
+                    			});
+                		});
+        	}
+        	setInterval(checkNotifications, 30000); // check every 30 seconds
     	</script>
 </head>
 <body>
     	<h1>Assessor Dashboard</h1>
-    
-    	<p>Welcome, <?php echo $_SESSION['full_name']; ?>!</p>
-    
+
+    	<p>Welcome, <?php echo htmlspecialchars($_SESSION['full_name']); ?>!</p>
+
     	<p><strong>Last Login: </strong>
-        	<?php echo $user['last_login'] ? $user['last_login'] : "First Login"; ?>
+        	<?php echo $user['last_login'] ? htmlspecialchars($user['last_login']) : "First Login"; ?>
     	</p>
-    
+
     	<p><strong>Current Date & Time: </strong> <span id="currentTime"></span></p>
     	<hr>
-    
+
     	<h3>Search Students</h3>
-    		<input type="text" id="searchBox" placeholder="Enter name or matric no" onkeyup="loadStudents(this.value)" size="30">
-    		<div id="results"></div>
-    
+    	<input type="text" id="searchBox" placeholder="Enter name or matric no" 
+           onkeyup="loadStudents(this.value)" size="30">
+    	<div id="results"></div>
+
     	<hr>
     	<h3>Navigation</h3>
-    	<ul>
+   	<ul>
         	<li><a href="view_assigned_students.php">View Assigned Students</a></li>
         	<li><a href="manage_assessments.php">Manage Assessments</a></li>
         	<li><a href="student_records.php">View Student Records</a></li>

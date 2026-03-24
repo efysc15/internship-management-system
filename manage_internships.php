@@ -54,6 +54,13 @@ if(isset($_POST['add'])) {
 
 		if($stmt->execute()) {
 			$message = "Internship added successfully!";
+
+			// Notify assessor 
+			$notify_msg = "A new student internship has been assigned to you.";
+			$notify = $conn->prepare("INSERT INTO notifications (assessor_id, message) VALUES (?, ?)");
+			$notify->bind_param("is", $assessor_id, $notify_msg);
+			$notify->execute();
+			$notify->close();
 		} else {
 			$message = "Error: Could not add internship.";
 		}	
@@ -80,6 +87,20 @@ if(isset($_POST['update'])) {
 	
     		if($stmt->execute()) {
         		$message = "Internship updated successfully!";
+
+			// Notify assessor of update 
+			$notify_msg = "Internship details for one of your students have been updated.";
+			// Find assessor_id for this internship 
+			$assessor_lookup = $conn->prepare("SELECT assessor_id FROM internships WHERE internship_id=?");
+			$assessor_lookup->bind_param("i", $internship_id);
+			$assessor_lookup->execute();
+			$assessor_result = $assessor_lookup->get_result();
+			if($assessor_row = $assessor_result->fetch_assoc()) {
+				$assessor_id = $assessor_row['assessor_id'];
+				$notify = $conn->prepare("INSERT INTO notifications (assessor_id, message) VALUES (?, ?)");
+				$notify->bind_param("is", $assessor_id, $notify_msg);
+				$notify->execute();
+			}
     		} else {
         		$message = "Error: Could not update internship.";
     		}
