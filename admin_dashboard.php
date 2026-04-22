@@ -53,6 +53,8 @@ $user = $result->fetch_assoc();
 <html>
 <head>
     	<title>Admin Dashboard</title>
+		<link rel="stylesheet" href="css/style.css">
+
     	<script>
         	// Auto-update current time every second
         	function updateTime() {
@@ -70,30 +72,109 @@ $user = $result->fetch_assoc();
     	</script>
 </head>
 <body>
-    	<h1>Admin Dashboard</h1>
-    
-    	<!-- Welcome Message -->
-    	<p>Welcome, <?php echo $_SESSION['full_name']; ?>!</p>
+<div class="container">
 
-    	<!-- Role Display -->
-    	<p><strong>Role: </strong> <?php echo strtoupper($_SESSION['role']); ?></p>
+    <!-- Navbar -->
+	<div class="navbar">
+		<a href="admin_dashboard.php" class="active">🏠 Dashboard</a>
+		<a href="manage_students.php">🎓 Students</a>
+		<a href="manage_internships.php">🏢 Internships</a>
+		<a href="register_user.php">👤 Register User</a>
+		<a href="logout.php">🚪 Logout</a>
+    </div>
 
-    	<!-- Last Login Display -->
-    	<p><strong>Last Login: </strong>
-        	<?php echo $user['last_login'] ? $user['last_login'] : "First Login"; ?>
-    	</p>
+	<!-- Welcome Card -->
+	<div class="hero-card">
+		<img src="https://cdn-icons-png.flaticon.com/512/3062/3062634.png" width="60" style="position:absolute; top:20px; right:20px;">
+		<div class="icon-title">
+			<span>💼</span>
+			<h1>Admin Dashboard</h1>
+        </div>
 
-    	<!-- Current Date & Time -->
-    	<p><strong>Current Date & Time: </strong> <span id="currentTime"></span></p>
-    	<hr>
-    
-    	<!-- Navigation Menu -->
-    	<h3>Navigation</h3>
-    	<ul>
-        	<li><a href="manage_students.php">Manage Students</a></li>
-        	<li><a href="manage_internships.php">Manage Internships</a></li>
-        	<li><a href="register_user.php">Register New User (Admin Only)</a></li>
-        	<li><a href="logout.php">Logout</a></li>
-    	</ul>
+		<p>Welcome, <strong><?php echo $_SESSION['full_name']; ?></strong> 👋🏻</p>
+		<p>You are logged in as an administrator. Manage your system efficiently here.</p>
+		<p><strong>Role:</strong> <?php echo strtoupper($_SESSION['role']); ?></p>
+		<p><strong>Last login:</strong>
+		    <?php echo $user['last_login'] ? $user['last_login'] : "First Login"; ?>
+        </p>
+		<p><strong>Current Time:</strong> <span id="currentTime"></span></p>
+    </div>
+
+	<!-- Quick Actions -->
+	<div class="card quick-actions-card">
+		<h2>🚀 Quick Actions</h2>
+		<div class="action-row">
+
+			<div class="action-item">
+			    <a href="manage_students.php" class="btn action-btn">🎓 Manage Students</a>
+				<span class="help-icon">ℹ︎
+					<span class="tooltip-text">View, add, edit, and delete student records.</span>
+                </span>
+            </div>
+
+			<div class="action-item">
+			    <a href="manage_internships.php" class="btn action-btn">🏢 Manage Internships</a>
+				<span class="help-icon">ℹ︎
+					<span class="tooltip-text">Assign students to internships and manage company details.</span>
+                </span>
+            </div>
+
+			<div class="action-item">
+			    <a href="register_user.php" class="btn action-btn">👤 Register User</a>
+				<span class="help-icon">ℹ︎
+					<span class="tooltip-text">Create login accounts for assessors or other users.</span>
+                </span>
+            </div>
+
+        </div>
+    </div>
+
+	<!-- Stats -->
+	 <div class="stats">
+		<div class="stat-box">
+			<h3>🎓 Total Students</h3>
+			<p>120</p>
+        </div>
+
+		<div class="stat-box">
+			<h3>🏢 Internships</h3>
+			<p>45</p>
+        </div>
+
+		<div class="stat-box">
+			<h3>📝 Assessments</h3>
+			<p>30</p>
+        </div>
+    </div>
+
+	<!-- System Features -->
+	<div class="card">
+        <h2>✨ System Features</h2>
+        <div class="feature-grid">
+            <div class="feature-box">
+                <h3><img src="https://cdn-icons-png.flaticon.com/512/3135/3135755.png" width="24"> Student Management</h3>
+                <p>Add, edit, delete, and manage student records efficiently.</p>
+            </div>
+
+            <div class="feature-box">
+                <h3>🏢 Internship Management</h3>
+                <p>Assign internships and track placements easily.</p>
+            </div>
+
+            <div class="feature-box">
+                <h3>📝 Assessment System</h3>
+                <p>Enter marks and evaluate student performance.</p>
+            </div>
+
+            <div class="feature-box">
+                <h3>📊 Reports</h3>
+                <p>Generate report cards and review results.</p>
+            </div>
+         </div>
+    </div>
+
+</div>
 </body>
 </html>
+
+

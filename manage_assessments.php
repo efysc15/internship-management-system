@@ -52,7 +52,15 @@ if(isset($_POST['submit_assessment'])) {
     	} else {
         	// Calculate total score as percentage
         	$sum_scores = array_sum($criteria); // sum of all 8 criteria
-       		$total_score = ($sum_scores / 800) * 100; // normalized percentage
+       		$total_score = 
+			    ($task_project * 0.10) +
+				($health_safety * 0.10) +
+				($theory_application * 0.10) +
+				($report_presentation * 0.15) +
+				($language_clarity * 0.10) +
+				($lifelong_learning * 0.15) +
+				($project_management * 0.15) +
+				($time_management * 0.15);
 
         	$stmt = $conn->prepare("SELECT internship_id FROM internships WHERE student_id = ? AND assessor_id = ? LIMIT 1");
         	$stmt->bind_param("ii", $student_id, $assessor_id);
@@ -115,52 +123,101 @@ $stmt2->close();
 <html>
 <head>
     	<title>Manage Assessments</title>
+		<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    	<h1>Manage Assessments</h1>
-    	<a href="assessor_dashboard.php">Back to Dashboard</a>
-    	<hr>
+<div class="container">
 
-    	<!-- Feedback message -->
-    	<?php if($message != "") echo "<p style='color:red'>$message</p>"; ?>
+	<div class="navbar">
+		<a href="assessor_dashboard.php">🏠 Dashboard</a>
+		<a href="view_assigned_students.php">👥 Assigned Students</a>
+		<a href="manage_assessments.php" class="active">📝 Assessments</a>
+		<a href="student_records.php">📊 Student Records</a>
+		<a href="logout.php">🚪 Logout</a>
+    </div>
 
-    	<!-- Assessment Form -->
+	<div class="hero-card">
+		<div class="icon-title">
+			<span>📝</span>
+    	    <h1>Manage Assessments</h1>
+        </div>
+    	<p> Submit and review internship assessments for your assigned students.</p>
+    </div>   
+
+    <!-- Feedback message -->
+    <?php if($message != ""): ?>
+		<div class="card">
+			<div class="<?php echo(strpos($message, 'successfully') !== false) ? 'success' : 'error'; ?>">
+				<?php echo htmlspecialchars($message); ?>
+	        </div>
+	    </div>
+	<?php endif; ?>
+
+    <!-- Assessment Form -->
+	<div class="card">
     	<h3>Submit New Assessment</h3>
     	<form method="POST">
-        	Student:
+			<label>Student</label>
         	<select name="student_id" required>
-            		<option value="">-- Select Student --</option>
-            		<?php while($s = $students->fetch_assoc()) { ?>
-                		<option value="<?php echo $s['student_id']; ?>">
-                    			<?php echo htmlspecialchars($s['student_name'])." (".$s['matric_no'].")"; ?>
-                		</option>
-            		<?php } ?>
-        	</select><br><br>
+            	<option value="">-- Select Student --</option>
+            	<?php while($s = $students->fetch_assoc()) { ?>
+                	<option value="<?php echo $s['student_id']; ?>">
+                    	<?php echo htmlspecialchars($s['student_name'])." (".$s['matric_no'].")"; ?>
+                	</option>
+            	<?php } ?>
+        	</select>
 
-        	Task/Project: <input type="number" name="task_project" min="0" max="100" required> / 100<br><br>
-        	Health & Safety: <input type="number" name="health_safety" min="0" max="100" required> / 100<br><br>
-        	Theory Application: <input type="number" name="theory_application" min="0" max="100" required> / 100<br><br>
-        	Report Presentation: <input type="number" name="report_presentation" min="0" max="100" required> / 100<br><br>
-        	Language Clarity: <input type="number" name="language_clarity" min="0" max="100" required> / 100<br><br>
-        	Lifelong Learning: <input type="number" name="lifelong_learning" min="0" max="100" required> / 100<br><br>
-        	Project Management: <input type="number" name="project_management" min="0" max="100" required> / 100<br><br>
-        	Time Management: <input type="number" name="time_management" min="0" max="100" required> / 100<br><br>
+			<label>Task / Project</label>
+		    <input type="number" name="task_project" min="0" max="100" required> 
 
-        	Comments:<br>
-        	<textarea name="comments" rows="4" cols="50"></textarea><br><br>
+			<label>Health & Safety</label>
+        	<input type="number" name="health_safety" min="0" max="100" required> 
+
+        	<label>Theory Application</label>
+			<input type="number" name="theory_application" min="0" max="100" required> 
+
+        	<label>Report Presentation</label>
+			<input type="number" name="report_presentation" min="0" max="100" required> 
+
+        	<label>Language Clarity</label>
+			<input type="number" name="language_clarity" min="0" max="100" required> 
+
+        	<label>Lifelong Learning</label>
+			<input type="number" name="lifelong_learning" min="0" max="100" required> 
+
+        	<label>Project Management</label>
+			<input type="number" name="project_management" min="0" max="100" required> 
+
+        	<label>Time Management</label>
+			<input type="number" name="time_management" min="0" max="100" required> 
+
+        	<label>Comments</label>
+        	<textarea name="comments" rows="4"></textarea>
 
         	<button type="submit" name="submit_assessment">Submit Assessment</button>
     	</form>
-    <hr>
+	</div>
 
-    	<!-- Assessment Records -->
+    <!-- Assessment Records -->
+	<div class="card">
     	<h3>Submitted Assessments</h3>
-    	<table border="1" cellpadding="5">
-        	<tr>
-            		<th>ID</th><th>Student</th><th>Matric No</th>
-            		<th>Task</th><th>Safety</th><th>Theory</th><th>Report</th>
-            		<th>Language</th><th>Lifelong</th><th>Project Mgmt</th><th>Time Mgmt</th>
-            		<th>Total (%)</th><th>Comments</th><th>Date</th>
+		<div class="table-wrapper">
+			<table>
+        	    <tr>
+            		<th>ID</th>
+					<th>Student</th>
+					<th>Matric No</th>
+            		<th>Task</th>
+					<th>Safety</th>
+					<th>Theory</th>
+					<th>Report</th>
+            		<th>Language</th>
+					<th>Lifelong</th>
+					<th>Project Mgmt</th>
+					<th>Time Mgmt</th>
+            		<th>Total (%)</th>
+					<th>Comments</th>
+					<th>Date</th>
         	</tr>
         	<?php while($row = $assessments->fetch_assoc()) { ?>
         	<tr>
@@ -171,15 +228,19 @@ $stmt2->close();
             		<td><?php echo htmlspecialchars($row['health_safety']); ?></td>
             		<td><?php echo htmlspecialchars($row['theory_application']); ?></td>
             		<td><?php echo htmlspecialchars($row['report_presentation']); ?></td>
-           		<td><?php echo htmlspecialchars($row['language_clarity']); ?></td>
+           		    <td><?php echo htmlspecialchars($row['language_clarity']); ?></td>
             		<td><?php echo htmlspecialchars($row['lifelong_learning']); ?></td>
             		<td><?php echo htmlspecialchars($row['project_management']); ?></td>
             		<td><?php echo htmlspecialchars($row['time_management']); ?></td>
             		<td><?php echo number_format($row['total_score'], 2); ?>%</td>
             		<td><?php echo htmlspecialchars($row['comments']); ?></td>
             		<td><?php echo htmlspecialchars($row['created_at']); ?></td>
-       		</tr>
-        	<?php } ?>
-    	</table>
+       		    </tr>
+        	    <?php } ?>
+    	    </table>
+	    </div>
+	</div>
+
+</div>
 </body>
-</html>
+
